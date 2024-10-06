@@ -74,7 +74,18 @@
             <div class="form-group d-flex flex-align-center flex-justify-between">
                 <button class="button primary">{{ trans("cruds.login.identification") }}</button>
             </div>
+
+            @if(count(Config::get('services.socialite_avialable')) > 0)
+            <hr />
+                @foreach(Config::get('services.socialite_avialable') as $provider)
+                <div class="form-group d-flex flex-align-center flex-justify-between">
+                    <a href="{{ route('socialite.redirect', $provider) }}" title="Connexion/Inscription avec Google" class="btn btn-link">Continuer avec {{Config::get('services.'.$provider.'.view_name')}}</a>
+                </div>
+                @endforeach
+            @endif
+
         </form>
+
 
     <script>
         function invalidForm(){

@@ -30,4 +30,17 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'socialite_avialable' => ! empty(env('SOCIALITE_AVIALABLE', "")) 
+                            ? explode(',', env('SOCIALITE_AVIALABLE', ""))
+                            : [],
+
+    'oidc' => [    
+        'client_id' => env('OIDC_CLIENT_ID'),  
+        'client_secret' => env('OIDC_CLIENT_SECRET'),  
+        'host' => env('OIDC_BASE_URL'),
+        'redirect' => env('OIDC_BASE_URL').'/redirect/',
+        'view_name' => 'Generic OIDC'
+    ],
+
+
 ];
