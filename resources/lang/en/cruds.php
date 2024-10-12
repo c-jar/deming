@@ -190,7 +190,7 @@ return [
          'add' => 'Add User',
          'show' => 'Show user',
          'fields' => [
-             'login' => 'Login',
+             'login' => 'UserId',
              'name' => 'Name',
              'title' => 'Title',
              'role' => 'Role',
