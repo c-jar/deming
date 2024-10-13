@@ -62,7 +62,7 @@ return [
         'redirect' => env('KEYCLOAK_REDIRECT_URI'),
         'base_url' => env('KEYCLOAK_BASE_URL'),   // Specify your keycloak server URL here
         'realms' => env('KEYCLOAK_REALM'),        // Specify your keycloak realm
-        'view_name' => 'Keycloak',
+        'display_name' => env('Keycloak_DISPLAY_NAME', 'Keycloak'),
     ],
 
 ];
