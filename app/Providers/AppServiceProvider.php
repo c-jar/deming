@@ -62,5 +62,9 @@ class AppServiceProvider extends ServiceProvider
        if (Config::get('services.oidc')){
             $this->bootOIDCSocialite();
         }
+
+        Event::listen(function (\SocialiteProviders\Manager\SocialiteWasCalled $event) {
+            $event->extendSocialite('keycloak', \SocialiteProviders\Keycloak\Provider::class);
+        });        
     }
 }
