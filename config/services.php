@@ -37,6 +37,9 @@ return [
         'oidc' => [
             'allow_create_user' => env("OIDC_ALLOW_CREATE_USER", false),
         ],
+        'keycloak' => [
+            'allow_create_user' => env("KEYCLOAK_ALLOW_CREATE_USER", false),
+        ],
     ],
 
     'oidc' => [    
