@@ -32,10 +32,15 @@ return [
             
     'socialite_controller' => [
         'providers' => ! empty(env('SOCIALITE_PROVIDERS', "")) 
-                             ? explode(',', env('SOCIALITE_PROVIDERS', ""))
+                             ? explode(' ', env('SOCIALITE_PROVIDERS', ""))
                              : [],
         'oidc' => [
+            'display_name' => env('OIDC_DISPLAY_NAME', 'Generic OIDC'),
             'allow_create_user' => env("OIDC_ALLOW_CREATE_USER", false),
+            // Set to null if you want role to be set explicitily
+            'default_role' => env('OIDC_DEFAULT_ROLE', 'auditee'),
+            'role_claim' => env('OIDC_ROLE_CLAIM', 'role'),
+            'additional_scopes' => explode(' ', env('OIDC_ADDITIONAL_SCOPES', "")),
         ],
     ],
 
@@ -53,7 +58,6 @@ return [
             'locale' => 'locale',
             'email' => 'email'
         ],
-        'display_name' => env('OIDC_DISPLAY_NAME', 'Generic OIDC'),
     ],
 
 

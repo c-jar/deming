@@ -59,7 +59,7 @@ class AppServiceProvider extends ServiceProvider
             });
         }
 
-       if (Config::get('services.oidc')){
+       if (in_array('oidc', Config::get('services.socialite_controller.providers'))){
             $this->bootOIDCSocialite();
         }
     }

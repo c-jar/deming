@@ -84,7 +84,7 @@
                 <a href="{{ route('socialite.redirect', $provider) }}" 
                    class="button secondary w-100"
                    role="button"><span class="mif-share fg-white mr-2"></span>
-                   {{ trans("cruds.login.connection_with") }}<strong>{{Config::get('services.'.$provider.'.display_name')}}</strong></a>
+                   {{ trans("cruds.login.connection_with") }}<strong>{{Config::get('services.socialite_controller.'.$provider.'.display_name')}}</strong></a>
             </div>
             @endforeach
                 @if($errors->has('socialite'))

@@ -93,7 +93,7 @@ class OIDCServiceProvider extends  AbstractProvider implements ProviderInterface
         if (config('services.oidc.userinfo_endpoint')){
             $base_url = config('services.oidc.userinfo_endpoint');
         }
-        
+
         Log::debug('Get user info from '.$base_url);
         $response = $this->getHttpClient()->post($base_url, [
             'headers' => [
@@ -111,14 +111,14 @@ class OIDCServiceProvider extends  AbstractProvider implements ProviderInterface
      */
     protected function mapUserToObject(array $user)
     {
-        Log::debug('Provider reture user :'.var_export($user, true));
+        Log::debug('Provider return user :'.var_export($user, true));
         $socialite_user = [];
         foreach(config('services.oidc.map_user_attr') as $socialite_attr => $provider_attr){
             if ( ! array_key_exists($provider_attr, $user)){
                 Log::debug("'$provider_attr' not provided");
                 continue;
             }
-            Log::debug("Set socialite_user['$socialite_attr']=".$user[$provider_attr]);
+            Log::debug("Map socialite_user['$socialite_attr']=".$user[$provider_attr]);
             $socialite_user[$socialite_attr] = $user[$provider_attr];
         }
         return (new User())->setRaw($user)->map($socialite_user);

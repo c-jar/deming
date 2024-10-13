@@ -7,6 +7,7 @@ use Laravel\Socialite\Facades\Socialite;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
+use Illuminate\Database\QueryException;
 use Log;
 
 /**
@@ -38,7 +39,9 @@ class SocialiteController extends Controller
 
         if (in_array($provider, $providers)) {
             Log::debug("Redirect with '$provider' provider");
-            return Socialite::with($provider)->redirect();
+            $config_name = 'services.socialite_controller.'.$provider;
+            $additional_scopes = config($config_name.'.additional_scopes');
+            return Socialite::with($provider)->scopes($additional_scopes)->redirect();
         }
 
         Log::warning("Redirect: Provider '$provider' not found.");
@@ -66,7 +69,7 @@ class SocialiteController extends Controller
                 $allow_create_user = config($config_name.'.allow_create_user');
             }
         }
-        Log::debug('Config allow_create_user='.$allow_create_user);
+        Log::debug('CONFIG: allow_create_user='.$allow_create_user);
 
 
         try {
@@ -79,45 +82,17 @@ class SocialiteController extends Controller
                 Log::warning("User has no attribute email");
             }
      
-            if (!$user) { 
-                if ($allow_create_user){
-                    $user = new User();
-
-                    // set login with preferred_username, otherwise use id
-                    $login = null;
-                    if($socialite_user->offsetExists('preferred_username')){
-                        $login = $socialite_user->offsetGet("preferred_username");
-                    }
-                    if(!$login){
-                        $login = $socialite_user->id;
-                    }
-                    $user->login = $login;
-
-                    $user->name = $socialite_user->name;
-                    $user->email = $socialite_user->email;
-                    $user->title = "";
-                    $user->role = self::ROLES_MAP['auditee'];
-
-                    $language = self::LOCALES[0];
-                    if ($socialite_user->offsetExists('locale')){
-                        $locale = explode('-', $socialite_user->offsetGet('locale'));
-                        $_language = $locale[0];
-                        if (in_array($_language, self::LOCALES)) $language = $_language;
-                    }
-                    $user->language = $language;
-
-                    // TODO allow null password
-                    $user->password = bin2hex(random_bytes(32));
-
-                    Log::info("Create new user '$user->login' with role '$user->role' from $provider provider");
-                    $user->save();
-
-
-                } else {
-                    Log::warning("User [$socialite_user->id, $socialite_user->email] not found in deming database");
-                    return redirect('login')->withErrors(['socialite' => trans('cruds.login.error.user_not_exist') ]);
-                } 
+            if (!$user && $allow_create_user) { 
+                $role_claim = config($config_name.'.role_claim', '');
+                Log::debug('CONFIG: role_claim='.$allow_create_user);
+                $default_role = config($config_name.'.default_role', '');
+                Log::debug('CONFIG: default_role='.$default_role);
+                $user = $this->create_user($socialite_user, $provider,  $role_claim, $default_role);
             }
+            if (!$user) {
+                Log::warning("User [$socialite_user->id, $socialite_user->email] not found in deming database");
+                return redirect('login')->withErrors(['socialite' => trans('cruds.login.error.user_not_exist') ]);
+            } 
 
             Log::info("User '$user->login' login with $provider provider");
      
@@ -127,5 +102,61 @@ class SocialiteController extends Controller
         } catch (Exception $exception) {
             return redirect('login');
         }
+    }
+
+    protected function create_user($socialite_user, string $provider, string $role_claim, string $default_role) {
+        $user = new User();
+
+        // set login with preferred_username, otherwise use id
+        $login = null;
+        if($socialite_user->offsetExists('preferred_username')){
+            $login = $socialite_user->offsetGet("preferred_username");
+        }
+        if(!$login){
+            $login = $socialite_user->id;
+        }
+        $user->login = $login;
+
+        $user->name = $socialite_user->name;
+        $user->email = $socialite_user->email;
+        $user->title = "User provide by $provider";
+
+        $role_name = "";
+        if(!empty($role_claim)){
+            if($socialite_user->offsetExists($role_claim)){
+                $role_name = $socialite_user->offsetGet($role_claim);
+            }
+        }
+        if(!array_key_exists($role_name, self::ROLES_MAP)){
+            if(!empty($default_role)){
+                $role_name = $default_role;
+            } else {
+                Log::error("No default role set! A valid role must be provided. role='$role_name'");
+                return null;
+            }
+        }
+        $user->role = self::ROLES_MAP[$role_name];
+
+        $language = self::LOCALES[0];
+        if ($socialite_user->offsetExists('locale')){
+            $locale = explode('-', $socialite_user->offsetGet('locale'));
+            $_language = $locale[0];
+            if (in_array($_language, self::LOCALES)) $language = $_language;
+        }
+        $user->language = $language;
+
+        // TODO allow null password
+        $user->password = bin2hex(random_bytes(32));
+
+        Log::info("Create new user '$user->login' with role '$user->role' from $provider provider");
+        try {
+            $user->save();
+        } catch(QueryException $exception){
+            Log::debug($exception->getMessage());
+            Log::error("Unable to create user");
+            return null;
+        }
+
+        return $user;
     }
 }
