@@ -65,30 +65,33 @@ class SocialiteController extends Controller
         $config_name = 'services.socialite_controller.'.$provider;
         $allow_create_user = false;
         if(config($config_name)){
-            if(config($config_name.'.allow_create_user')){
-                $allow_create_user = config($config_name.'.allow_create_user');
-            }
+            $allow_create_user = config($config_name.'.allow_create_user', $allow_create_user);
         }
-        Log::debug('CONFIG: allow_create_user='.$allow_create_user);
-
+        Log::debug('CONFIG: allow_create_user='.($allow_create_user ? 'true' : 'false'));
+        if($allow_create_user){
+            $role_claim = config($config_name.'.role_claim', '');
+            Log::debug('CONFIG: role_claim='.$role_claim);
+            $default_role = config($config_name.'.default_role', '');
+            Log::debug('CONFIG: default_role='.$default_role);
+        }
 
         try {
             $socialite_user = Socialite::with($provider)->user();
             $user = null;
 
+            // Search user by email
             if($socialite_user->email){
                 $user = User::query()->whereEmail($socialite_user->email)->first();
             } else {
                 Log::warning("User has no attribute email");
             }
      
+            // If not exist and allow to create user then create it
             if (!$user && $allow_create_user) { 
-                $role_claim = config($config_name.'.role_claim', '');
-                Log::debug('CONFIG: role_claim='.$allow_create_user);
-                $default_role = config($config_name.'.default_role', '');
-                Log::debug('CONFIG: default_role='.$default_role);
                 $user = $this->create_user($socialite_user, $provider,  $role_claim, $default_role);
             }
+
+            // If no user redirect to login with error message
             if (!$user) {
                 Log::warning("User [$socialite_user->id, $socialite_user->email] not found in deming database");
                 return redirect('login')->withErrors(['socialite' => trans('cruds.login.error.user_not_exist') ]);
@@ -139,9 +142,8 @@ class SocialiteController extends Controller
 
         $language = self::LOCALES[0];
         if ($socialite_user->offsetExists('locale')){
-            $locale = explode('-', $socialite_user->offsetGet('locale'));
-            $_language = $locale[0];
-            if (in_array($_language, self::LOCALES)) $language = $_language;
+            $locale = explode('-', $socialite_user->offsetGet('locale'))[0];
+            if (in_array($locale, self::LOCALES)) $language = $locale;
         }
         $user->language = $language;
 
