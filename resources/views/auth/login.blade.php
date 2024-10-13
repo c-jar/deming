@@ -42,7 +42,6 @@
     <div class="bg-white p-6 mx-auto border fg-black win-shadow login-form">
     <form
           method="POST" action="/login"
-          class=""
           data-role="validator"
           action="javascript:"
           data-clear-invalid="2000"
