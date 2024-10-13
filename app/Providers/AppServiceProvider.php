@@ -22,6 +22,22 @@ class AppServiceProvider extends ServiceProvider
     }
 
     /**
+     * Register Generic OpenID Connect Provider.
+     */
+    private function bootOIDCSocialite()
+    {
+        $socialite = $this->app->make('Laravel\Socialite\Contracts\Factory');
+        $socialite->extend(
+            'oidc',
+            function ($app) use ($socialite) {
+                $config = $app['config']['services.oidc'];
+                return $socialite->buildProvider(\App\Providers\Socialite\OIDCServiceProvider::class, $config);
+            }
+        );
+    }
+
+
+    /**
      * Bootstrap any application services.
      *
      * @return void
@@ -44,9 +60,7 @@ class AppServiceProvider extends ServiceProvider
         }
 
        if (Config::get('services.oidc')){
-            Event::listen(function (\SocialiteProviders\Manager\SocialiteWasCalled $event) {
-                $event->extendSocialite('oidc', \App\Providers\Socialite\OIDCServiceProvider::class);
-            });
+            $this->bootOIDCSocialite();
         }
     }
 }

@@ -29,7 +29,7 @@ return [
         'secret' => env('AWS_SECRET_ACCESS_KEY'),
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
-
+            
     'socialite_avialable' => ! empty(env('SOCIALITE_AVIALABLE', "")) 
                             ? explode(',', env('SOCIALITE_AVIALABLE', ""))
                             : [],
@@ -38,7 +38,18 @@ return [
         'client_id' => env('OIDC_CLIENT_ID'),  
         'client_secret' => env('OIDC_CLIENT_SECRET'),  
         'host' => env('OIDC_BASE_URL'),
-        'redirect' => env('OIDC_BASE_URL').'/redirect/',
+        'redirect' => rtrim(env('APP_URL'), '/').'/auth/callback/oidc',
+        'authorize_endpoint' => env('OIDC_AUTHORIZE_ENDPOINT', null),
+        'token_endpoint' => env('OIDC_TOKEN_ENDPOINT', null),
+        'userinfo_endpoint' => env('OIDC_USERINFO_ENDPOINT', null),
+        'map_user_attr' => [
+            'id' => 'sub',
+            'username' => 'preferred_username',
+            'given_name' => 'first_name',
+            'last_name' => 'last_name',
+            'locale' => 'locale',
+            'email' => 'email'
+        ],
         'view_name' => 'Generic OIDC'
     ],
 

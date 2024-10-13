@@ -39,9 +39,10 @@
 </head>
 
 <body class="d-flex flex-justify-center flex-align-center bg-default">
+    <div class="bg-white p-6 mx-auto border fg-black win-shadow login-form">
     <form
           method="POST" action="/login"
-          class="login-form bg-white p-6 mx-auto border fg-black win-shadow"
+          class=""
           data-role="validator"
           action="javascript:"
           data-clear-invalid="2000"
@@ -75,7 +76,8 @@
                 <button class="button primary">{{ trans("cruds.login.identification") }}</button>
             </div>
 
-            @if(count(Config::get('services.socialite_avialable')) > 0)
+        </form>
+        @if(count(Config::get('services.socialite_avialable')) > 0)
             <hr />
                 @foreach(Config::get('services.socialite_avialable') as $provider)
                 <div class="form-group d-flex flex-align-center flex-justify-between">
@@ -83,8 +85,7 @@
                 </div>
                 @endforeach
             @endif
-
-        </form>
+    </div>
 
 
     <script>
