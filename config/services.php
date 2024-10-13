@@ -34,6 +34,9 @@ return [
         'providers' => ! empty(env('SOCIALITE_PROVIDERS', "")) 
                              ? explode(',', env('SOCIALITE_PROVIDERS', ""))
                              : [],
+        'oidc' => [
+            'allow_create_user' => env("OIDC_ALLOW_CREATE_USER", false),
+        ],
     ],
 
     'oidc' => [    
@@ -46,9 +49,7 @@ return [
         'userinfo_endpoint' => env('OIDC_USERINFO_ENDPOINT', null),
         'map_user_attr' => [
             'id' => 'sub',
-            'username' => 'preferred_username',
-            'given_name' => 'first_name',
-            'last_name' => 'last_name',
+            'name' => 'name',
             'locale' => 'locale',
             'email' => 'email'
         ],
