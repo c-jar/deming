@@ -77,16 +77,22 @@
             </div>
 
         </form>
-        @if(count(Config::get('services.socialite_avialable')) > 0)
+        @if(count(Config::get('services.socialite_controller.providers')) > 0)
             <hr />
-            @foreach(Config::get('services.socialite_avialable') as $provider)
+            @foreach(Config::get('services.socialite_controller.providers') as $provider)
             <div class="d-flex flex-align-center my-2">
                 <a href="{{ route('socialite.redirect', $provider) }}" 
                    class="button secondary w-100"
                    role="button"><span class="mif-share fg-white mr-2"></span>
-                   {{ trans("cruds.login.connection_with") }}<strong>{{Config::get('services.'.$provider.'.view_name')}}</strong></a>
+                   {{ trans("cruds.login.connection_with") }}<strong>{{Config::get('services.'.$provider.'.display_name')}}</strong></a>
             </div>
             @endforeach
+                @if($errors->has('socialite'))
+                <div class="d-flex flex-align-center my-2">
+                    <span class="invalid-feedback" role="alert">
+                        <strong>{{ $errors->first('socialite') }}</strong>
+                </div>
+                @endif
         @endif
     </div>
 

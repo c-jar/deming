@@ -169,6 +169,9 @@ return [
          'identification' => 'Login',
          'connection' => 'Connection',
          'connection_with' => 'Connection with',
+         'error' => [
+            'user_not_exist' => 'User not exist',
+        ],
      ],
     'report' => [
         'action_plan' => [
