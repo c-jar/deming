@@ -86,7 +86,7 @@ class SocialiteController extends Controller
                     // set login with preferred_username, otherwise use id
                     $login = null;
                     if($socialite_user->offsetExists('preferred_username')){
-                        $login = $socialite_user->date_offset_get("preferred_username");
+                        $login = $socialite_user->offsetGet("preferred_username");
                     }
                     if(!$login){
                         $login = $socialite_user->id;
