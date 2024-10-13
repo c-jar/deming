@@ -62,6 +62,8 @@ class SocialiteController extends Controller
                 Log::warning("User [$socialiteUser->id, $socialiteUser->email] not found in deming database");
                 return redirect('login');
             }
+
+            Log::info("User '$user->login' login with $provider provider");
      
             Auth::guard('web')->login($user);   
      
