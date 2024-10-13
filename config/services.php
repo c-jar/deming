@@ -30,15 +30,17 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
             
-    'socialite_avialable' => ! empty(env('SOCIALITE_AVIALABLE', "")) 
-                            ? explode(',', env('SOCIALITE_AVIALABLE', ""))
-                            : [],
+    'socialite_controller' => [
+        'providers' => ! empty(env('SOCIALITE_PROVIDERS', "")) 
+                             ? explode(',', env('SOCIALITE_PROVIDERS', ""))
+                             : [],
+    ],
 
     'oidc' => [    
         'client_id' => env('OIDC_CLIENT_ID'),  
         'client_secret' => env('OIDC_CLIENT_SECRET'),  
         'host' => env('OIDC_BASE_URL'),
-        'redirect' => rtrim(env('APP_URL'), '/').'/auth/callback/oidc',
+        'redirect' => env('OIDC_REDIRECT_URI', rtrim(env('APP_URL'), '/').'/auth/callback/oidc'),
         'authorize_endpoint' => env('OIDC_AUTHORIZE_ENDPOINT', null),
         'token_endpoint' => env('OIDC_TOKEN_ENDPOINT', null),
         'userinfo_endpoint' => env('OIDC_USERINFO_ENDPOINT', null),
@@ -50,7 +52,7 @@ return [
             'locale' => 'locale',
             'email' => 'email'
         ],
-        'view_name' => 'Generic OIDC'
+        'display_name' => env('OIDC_DISPLAY_NAME', 'Generic OIDC'),
     ],
 
 

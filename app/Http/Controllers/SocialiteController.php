@@ -24,7 +24,7 @@ class SocialiteController extends Controller
      * Redirect action use to redirect user to OIDC provider.
      */
     public function redirect(string $provider) {
-        $providers = config('services.socialite_avialable', []);
+        $providers = config('services.socialite_controller.providers', []);
 
         if (in_array($provider, $providers)) {
             Log::debug("Redirect with '$provider' provider");
@@ -39,7 +39,7 @@ class SocialiteController extends Controller
      * Callback action use when OIDC provider redirect user to app.
      */
     public function callback(Request $request, string $provider) {
-        $providers = config('services.socialite_avialable', []);
+        $providers = config('services.socialite_controller.providers', []);
 
         if (! in_array($provider, $providers)) {
             Log::warning("Callback: Provider '$provider' not found.");
@@ -60,7 +60,7 @@ class SocialiteController extends Controller
      
             if (!$user) {
                 Log::warning("User [$socialiteUser->id, $socialiteUser->email] not found in deming database");
-                return redirect('login');
+                return redirect('login')->withErrors(['socialite' => trans('cruds.login.error.user_not_exist') ]);
             }
 
             Log::info("User '$user->login' login with $provider provider");
