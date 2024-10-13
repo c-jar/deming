@@ -15,13 +15,13 @@ Auth::routes();
 
 Route::namespace('App\\Http\\Controllers')->group(function () {
     /* Index */
-    Route::get('/', 'HomeController@index');
+    Route::get('/', 'HomeController@index')->name('home');
     Route::get('/home', 'HomeController@index');
     Route::get('/index', 'HomeController@index');
 
     /* Socialite */
     Route::get('auth/redirect/{driver}', 'SocialiteController@redirect')->name("socialite.redirect");
-    Route::post('auth/callback/{driver}', 'SocialiteController@callback')->name("socialite.callback");
+    Route::get('auth/callback/{driver}', 'SocialiteController@callback')->name("socialite.callback");
 
     /* Testing */
     Route::get('/test', 'HomeController@test');
