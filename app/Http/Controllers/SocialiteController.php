@@ -82,7 +82,6 @@ class SocialiteController extends Controller
             if (!$user) { 
                 if ($allow_create_user){
                     $user = new User();
-<<<<<<< HEAD
 
                     // set login with preferred_username, otherwise use id
                     $login = null;
@@ -94,9 +93,6 @@ class SocialiteController extends Controller
                     }
                     $user->login = $login;
 
-=======
-                    $user->login = $socialite_user->id;
->>>>>>> d13523ef3b04fd0d154f5c8fe6e6f4c9fa3e595e
                     $user->name = $socialite_user->name;
                     $user->email = $socialite_user->email;
                     $user->title = "";
