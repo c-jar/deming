@@ -168,6 +168,7 @@ return [
          'title' => 'Enter a password',
          'identification' => 'Login',
          'connection' => 'Connection',
+         'connection_with' => 'Connection with',
      ],
     'report' => [
         'action_plan' => [
