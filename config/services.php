@@ -52,9 +52,6 @@ return [
             'role_claim' => env('KEYCLOAK_ROLE_CLAIM', 'role'),
             'additional_scopes' => explode(' ', env('KEYCLOAK_ADDITIONAL_SCOPES', "")),
         ],
-        'keycloak' => [
-            'allow_create_user' => env("KEYCLOAK_ALLOW_CREATE_USER", false),
-        ],
     ],
 
     'oidc' => [    
