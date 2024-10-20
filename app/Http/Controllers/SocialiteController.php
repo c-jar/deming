@@ -2,13 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Laravel\Socialite\Facades\Socialite;
-use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Auth;
-use App\Models\User;
 use Illuminate\Database\QueryException;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Laravel\Socialite\Facades\Socialite;
 use Log;
+use Laravel\Socialite\Two\User as SocialiteUser;
+use App\Http\Controllers\Controller;
+use App\Models\User;
 
 /**
  * Socialite Controller for OpenID Connect Autentication
@@ -34,7 +35,8 @@ class SocialiteController extends Controller
     /**
      * Redirect action use to redirect user to OIDC provider.
      */
-    public function redirect(string $provider) {
+    public function redirect(string $provider) 
+    {
         $providers = config('services.socialite_controller.providers', []);
 
         if (in_array($provider, $providers)) {
@@ -51,7 +53,8 @@ class SocialiteController extends Controller
     /**
      * Callback action use when OIDC provider redirect user to app.
      */
-    public function callback(Request $request, string $provider) {
+    public function callback(Request $request, string $provider) 
+    {
         $providers = config('services.socialite_controller.providers', []);
 
         if (! in_array($provider, $providers)) {
@@ -64,11 +67,14 @@ class SocialiteController extends Controller
         // Get additionnal config for current provider
         $config_name = 'services.socialite_controller.'.$provider;
         $allow_create_user = false;
+        $allow_update_user = false;
         if(config($config_name)){
             $allow_create_user = config($config_name.'.allow_create_user', $allow_create_user);
+            $allow_update_user = config($config_name.'.allow_update_user', $allow_update_user);
         }
         Log::debug('CONFIG: allow_create_user='.($allow_create_user ? 'true' : 'false'));
-        if($allow_create_user){
+        Log::debug('CONFIG: allow_update_user='.($allow_update_user ? 'true' : 'false'));
+        if($allow_create_user || $allow_update_user){
             $role_claim = config($config_name.'.role_claim', '');
             Log::debug('CONFIG: role_claim='.$role_claim);
             $default_role = config($config_name.'.default_role', '');
@@ -97,6 +103,10 @@ class SocialiteController extends Controller
                 return redirect('login')->withErrors(['socialite' => trans('cruds.login.error.user_not_exist') ]);
             } 
 
+            if($allow_update_user){
+                $this->update_user($user, $socialite_user, $provider, $role_claim, $default_role);
+            }
+
             Log::info("User '$user->login' login with $provider provider");
      
             Auth::guard('web')->login($user);   
@@ -107,45 +117,19 @@ class SocialiteController extends Controller
         }
     }
 
-    protected function create_user($socialite_user, string $provider, string $role_claim, string $default_role) {
+    /**
+     * Create user with claims provided.
+     */
+    protected function create_user(SocialiteUser $socialite_user, string $provider, string $role_claim, string $default_role) 
+    {
         $user = new User();
 
-        // set login with preferred_username, otherwise use id
-        $login = null;
-        if($socialite_user->offsetExists('preferred_username')){
-            $login = $socialite_user->offsetGet("preferred_username");
-        }
-        if(!$login){
-            $login = $socialite_user->id;
-        }
-        $user->login = $login;
-
+        $user->login = $this->get_user_login($socialite_user);
         $user->name = $socialite_user->name;
         $user->email = $socialite_user->email;
         $user->title = "User provide by $provider";
-
-        $role_name = "";
-        if(!empty($role_claim)){
-            if($socialite_user->offsetExists($role_claim)){
-                $role_name = $socialite_user->offsetGet($role_claim);
-            }
-        }
-        if(!array_key_exists($role_name, self::ROLES_MAP)){
-            if(!empty($default_role)){
-                $role_name = $default_role;
-            } else {
-                Log::error("No default role set! A valid role must be provided. role='$role_name'");
-                return null;
-            }
-        }
-        $user->role = self::ROLES_MAP[$role_name];
-
-        $language = self::LOCALES[0];
-        if ($socialite_user->offsetExists('locale')){
-            $locale = explode('-', $socialite_user->offsetGet('locale'))[0];
-            if (in_array($locale, self::LOCALES)) $language = $locale;
-        }
-        $user->language = $language;
+        $user->role = $this->get_user_role($socialite_user, $role_claim, $default_role);
+        $user->language = $this->get_user_langage($socialite_user);
 
         // TODO allow null password
         $user->password = bin2hex(random_bytes(32));
@@ -160,5 +144,95 @@ class SocialiteController extends Controller
         }
 
         return $user;
+    }
+
+    /**
+     * Update user with claims providid.
+     */
+    protected function update_user(User $user, SocialiteUser $socialite_user, string $provider, string $role_claim, string $default_role)
+    {
+        $updated = false;
+
+        $login = $this->get_user_login($socialite_user);
+        if ($login !== $user->login) {
+            Log::debug("Login changed $user->login => $login");
+            $user->login = $login;
+            $updated = true;
+        }
+
+        if ($socialite_user->name !== $user->name) {
+            Log::debug("Name changed $user->name => $socialite_user->name");
+            $user->name = $socialite_user->name;
+            $updated = true;
+        }
+
+        $role = $this->get_user_role($socialite_user, $role_claim, $default_role);
+        if($role != $user->role){
+            Log::debug("Role changed $user->role => $role");
+            $user->role = $role;
+            $updated = true;
+        }
+
+        $language = $this->get_user_langage($socialite_user);
+        if ($language !== $user->language) {
+            Log::debug("Lauguage change $user->language => $language");
+            $user->language = $language;
+            $updated = true;
+        }
+
+        if ($updated) {
+            Log::info("Update user '$user->login' with role '$user->role' from $provider provider");
+            $user->save();
+        }
+        return $user;
+    }
+
+    /**
+     * Return user's login.
+     */
+    private function get_user_login(SocialiteUser $socialite_user) 
+    {
+        // set login with preferred_username, otherwise use id
+        if($socialite_user->offsetExists('preferred_username')){
+            return $socialite_user->offsetGet("preferred_username");
+        }
+        return $socialite_user->id;
+    }
+
+    /**
+     * Return user's role.
+     * If no role provided, use $default_role value.
+     * If $default_role is null and no role provided, null return.
+     */
+    private function get_user_role(SocialiteUser $socialite_user, string $role_claim, string $default_role)
+    {
+        $role_name = "";
+        if(!empty($role_claim)){
+            if($socialite_user->offsetExists($role_claim)){
+                $role_name = $socialite_user->offsetGet($role_claim);
+            }
+        }
+        if(!array_key_exists($role_name, self::ROLES_MAP)){
+            if(!empty($default_role)){
+                $role_name = $default_role;
+            } else {
+                Log::error("No default role set! A valid role must be provided. role='$role_name'");
+                return null;
+            }
+        }
+        return self::ROLES_MAP[$role_name];
+    }
+
+    /**
+     * Return user's language.
+     * Use locale claim to dertermine user's language.
+     */
+    private function get_user_langage(SocialiteUser $socialite_user) 
+    {
+        if ($socialite_user->offsetExists('locale')){
+            $locale = explode('-', $socialite_user->offsetGet('locale'))[0];
+            if (in_array($locale, self::LOCALES)) return $locale;
+        }
+        return self::LOCALES[0];
     }
 }

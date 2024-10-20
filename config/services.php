@@ -37,6 +37,7 @@ return [
         'oidc' => [
             'display_name' => env('OIDC_DISPLAY_NAME', 'Generic OIDC'),
             'allow_create_user' => env("OIDC_ALLOW_CREATE_USER", false),
+            'allow_update_user' => env("OIDC_ALLOW_UPDATE_USER", false),
             // Set to null if you want role to be set explicitily
             'default_role' => env('OIDC_DEFAULT_ROLE', 'auditee'),
             'role_claim' => env('OIDC_ROLE_CLAIM', 'role'),
