@@ -208,9 +208,8 @@ class SocialiteController extends Controller
     {
         $role_name = "";
         if(!empty($role_claim)){
-            if($socialite_user->offsetExists($role_claim)){
-                $role_name = $socialite_user->offsetGet($role_claim);
-            }
+            $role_name = $this->get_claim_value($socialite_user, $role_claim);
+            Log::debug("Provided claim '$role_claim'='$role_name'");
         }
         if(!array_key_exists($role_name, self::ROLES_MAP)){
             if(!empty($default_role)){
@@ -234,5 +233,19 @@ class SocialiteController extends Controller
             if (in_array($locale, self::LOCALES)) return $locale;
         }
         return self::LOCALES[0];
+    }
+
+    private function get_claim_value(SocialiteUser $user, string $claim){
+        $value = null;
+        foreach(explode('.', $claim) as $offset) {
+            if(! $value){
+                if (! $user->offsetExists($offset)) return null;
+                $value = $user->offsetGet($offset);
+                continue;
+            }
+            if (! array_key_exists($offset, $value)) return null;
+            $value = $value[$offset];
+        }
+        return $value;
     }
 }
